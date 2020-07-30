@@ -17,6 +17,13 @@ lista2InLista1(_,Lista2):-Lista2=[],!.
 lista2InLista1(Lista1,Lista2):-Lista2=[Cabeza|Cola],member(Cabeza,Lista1),
     lista2InLista1(Lista1,Cola),!.
 
+getUltimoElem([Cabeza|[]], Value):- !, Value = Cabeza.
+getUltimoElem([_|Cola], Value):- getUltimoElem(Cola, Value).
+
+getCabeza([Cabeza|_],Cabeza).
+
+getCola([_|Cola],Cola).
+
 %-----TDA REPOSITORIO-----
 
 %CONSTRUCTOR
@@ -39,20 +46,19 @@ isRep(RepInput):-is_list(RepInput),
     is_list(Remote), isListaDeListasStrings(Remote).
 
 %SELECTORES
-getInfoRep(RepInput,Info):-
-    isRep(RepInput), RepInput=[Info|_].
+getInfoRep(RepInput,Info):-isRep(RepInput), RepInput=[Info|_].
 
-getWorkspace(RepInput, Workspace):-
-    isRep(RepInput), RepInput=[_,Workspace|_].
+getWorkspace(RepInput, Workspace):-isRep(RepInput), RepInput=[_,Workspace|_].
 
-getIndex(RepInput, Index):-
-    isRep(RepInput), RepInput=[_,_,Index|_].
+getIndex(RepInput, Index):-isRep(RepInput), RepInput=[_,_,Index|_].
 
-getLocal(RepInput, Local):-
-    isRep(RepInput), RepInput=[_,_,_,Local|_].
+getLocal(RepInput, Local):-isRep(RepInput), RepInput=[_,_,_,Local|_].
 
-getRemote(RepInput, Remote):-
-    isRep(RepInput), RepInput=[_,_,_,_,Remote|_].
+getRemote(RepInput, Remote):-isRep(RepInput), RepInput=[_,_,_,_,Remote|_].
+
+getRama(RepInput, Rama):-getLocal(RepInput,Local), 
+    getUltimoElem(Local,Commit),
+    getCabeza(Commit,Rama).
     
 %MODIFICADORES  
 setIndex(Index,RepInput,RepOutput):-
@@ -85,6 +91,16 @@ addCommits(Commits,Rama,Mensaje,Archivos,NewCommits):-
     append(Aux,Archivos,Commit),
     append(Commits,[Commit],NewCommits).
 
+
+archivos2String(Archivos,Aux,String):-Archivos=[],String=Aux,!.
+archivos2String(Archivos,Aux,String):-getCabeza(Archivos,Cabeza),
+    string_concat(Aux,Cabeza,Aux2),
+    string_concat(Aux2,"\n",Aux3),
+    getCola(Archivos,Cola),
+    archivos2String(Cola,Aux3,String).
+
+
+
 %-----FIN DEL TDA-----
 
 %FUNCIONES OBLIGATORIAS
@@ -104,6 +120,7 @@ gitAdd(RepInput,ListaArchivos,RepOutput):-
 gitCommit(RepInput,Mensaje,RepOutput):-
     string(Mensaje), isRep(RepInput),
     getIndex(RepInput,Index),
+    not(Index=[]),
     getLocal(RepInput,Local),
     addCommits(Local,"master",Mensaje,Index,NewLocal),
     setLocal(NewLocal,RepInput,Aux),
@@ -112,10 +129,35 @@ gitCommit(RepInput,Mensaje,RepOutput):-
 gitPush(RepInput,RepOutput):-
     isRep(RepInput),
     getLocal(RepInput,Local),
+    not(Local=[]),
     getRemote(RepInput,Remote),
     append(Remote,Local,Aux),
     setRemote(Aux,RepInput,Aux2),
     setLocal([],Aux2,RepOutput).
+
+git2String(RepInput,RepoAsString):-
+    isRep(RepInput),
+    getInfoRep(RepInput,[NombreRep,Autor,Fecha|_]),
+    string_concat("###REPOSITORIO ",NombreRep,Aux),
+    string_concat(Aux," ###\nAutor: ",Aux2),
+    string_concat(Aux2,Autor,Aux3),
+    string_concat(Aux3,"\nFecha de creacion: ",Aux4),
+    string_concat(Aux4,Fecha,Aux5),
+    string_concat(Aux5,"\nRama actual: ",Aux6),
+    getRama(RepInput, Rama),
+    string_concat(Aux6, Rama, Aux7),
+    string_concat(Aux7, "\nArchivos en workspace: \n",Aux8),
+    getWorkspace(RepInput,Workspace),
+    archivos2String(Workspace,"",Workspace2String),
+    string_concat(Aux8,Workspace2String,Aux9),
+    string_concat(Aux9,"\nArchivos en el index: \n",Aux10),
+    getIndex(RepInput,Index),
+    archivos2String(Index,"",Index2String),
+    string_concat(Aux10,Index2String,RepoAsString).
+
+
+
+
 
 
 
