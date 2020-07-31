@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 repositorio([["lab2", "Roa", "Wed Jul 30 03:53:17 2020"], [], [], [], []]).
-repositorio([["lab1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","mensaje1","arch3","arch5"]], [["master","mensaje2","arch4"]]]).
+repositorio([["lab1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","mensaje2","arch32","arch15","archXX"],["master","mensaje1","arch3","arch5"]], [["master","mensaje2","arch4"]]]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -92,14 +92,20 @@ addCommits(Commits,Rama,Mensaje,Archivos,NewCommits):-
     append(Commits,[Commit],NewCommits).
 
 
-archivos2String(Archivos,Aux,String):-Archivos=[],String=Aux,!.
+archivos2String(Archivos,Aux,String):-Archivos=[],string_concat(Aux,"\n",String),!.
 archivos2String(Archivos,Aux,String):-getCabeza(Archivos,Cabeza),
     string_concat(Aux,Cabeza,Aux2),
-    string_concat(Aux2,"\n",Aux3),
+    string_concat(Aux2,", ",Aux3),
     getCola(Archivos,Cola),
     archivos2String(Cola,Aux3,String).
 
-
+commits2String(Commits,Aux,String):-Commits=[],String=Aux,!.
+commits2String(Commits,Aux,String):-getCabeza(Commits,[_|Commit]),
+    archivos2String(Commit,"",Aux1),
+    string_concat(Aux,Aux1,Aux2),
+    string_concat(Aux2,"\t",Aux3),
+    getCola(Commits,Cola),
+    commits2String(Cola,Aux3,String).
 
 %-----FIN DEL TDA-----
 
@@ -135,25 +141,33 @@ gitPush(RepInput,RepOutput):-
     setRemote(Aux,RepInput,Aux2),
     setLocal([],Aux2,RepOutput).
 
-git2String(RepInput,RepoAsString):-
+git2String(RepInput,RepAsString):-
     isRep(RepInput),
     getInfoRep(RepInput,[NombreRep,Autor,Fecha|_]),
     string_concat("###REPOSITORIO ",NombreRep,Aux),
-    string_concat(Aux," ###\nAutor: ",Aux2),
+    string_concat(Aux," ###\nAUTOR: ",Aux2),
     string_concat(Aux2,Autor,Aux3),
-    string_concat(Aux3,"\nFecha de creacion: ",Aux4),
+    string_concat(Aux3,"\nFECHA DE CREACION: ",Aux4),
     string_concat(Aux4,Fecha,Aux5),
-    string_concat(Aux5,"\nRama actual: ",Aux6),
+    string_concat(Aux5,"\nRAMA ACTUAL: ",Aux6),
     getRama(RepInput, Rama),
     string_concat(Aux6, Rama, Aux7),
-    string_concat(Aux7, "\nArchivos en workspace: \n",Aux8),
+    string_concat(Aux7, "\nARCHIVOS EN EL WORKSPACE: \n",Aux8),
     getWorkspace(RepInput,Workspace),
-    archivos2String(Workspace,"",Workspace2String),
+    archivos2String(Workspace,"\t",Workspace2String),
     string_concat(Aux8,Workspace2String,Aux9),
-    string_concat(Aux9,"\nArchivos en el index: \n",Aux10),
+    string_concat(Aux9,"ARCHIVOS EN EL INDEX: \n",Aux10),
     getIndex(RepInput,Index),
-    archivos2String(Index,"",Index2String),
-    string_concat(Aux10,Index2String,RepoAsString).
+    archivos2String(Index,"\t",Index2String),
+    string_concat(Aux10,Index2String,Aux11),
+    string_concat(Aux11, "COMMITS EN EL LOCAL\n",Aux12),
+    getLocal(RepInput,Local),
+    commits2String(Local,"\t",Local2String),
+    string_concat(Aux12,Local2String,Aux13),
+    string_concat(Aux13, "COMMITS EN EL REMOTE\n",Aux14),
+    getRemote(RepInput,Remote),
+    commits2String(Remote,"\t",Remote2String),
+    string_concat(Aux14,Remote2String,RepAsString).
 
 
 
