@@ -20,6 +20,10 @@ lista2InLista1(Lista1,Lista2):-Lista2=[Cabeza|Cola],member(Cabeza,Lista1),
 getUltimoElem([Cabeza|[]], Value):- !, Value = Cabeza.
 getUltimoElem([_|Cola], Value):- getUltimoElem(Cola, Value).
 
+invertirLista([],NewLista,NewLista).
+invertirLista([Cabeza|Cola],Aux,NewLista):-
+    invertirLista(Cola,[Cabeza|Aux],NewLista).
+
 getCabeza([Cabeza|_],Cabeza).
 
 getCola([_|Cola],Cola).
@@ -61,6 +65,14 @@ getRama(RepInput, Rama):-getLocal(RepInput,Local),
     getCabeza(Commit,Rama).
     
 %MODIFICADORES  
+setWorkspace(Workspace,RepInput,RepOutput):-
+    is_list(Workspace), isListaStrings(Workspace), isRep(RepInput),
+    getInfoRep(RepInput, Info),
+    getIndex(RepInput, Index),
+    getLocal(RepInput, Local),
+    getRemote(RepInput, Remote),
+    RepOutput=[Info,Workspace,Index,Local,Remote].
+
 setIndex(Index,RepInput,RepOutput):-
     is_list(Index), isListaStrings(Index), isRep(RepInput),
     getInfoRep(RepInput, Info),
@@ -86,10 +98,18 @@ setRemote(Remote,RepInput,RepOutput):-
     RepOutput=[Info,Workspace,Index,Local,Remote].
 
 %OTRAS FUNCIONES
-addCommits(Commits,Rama,Mensaje,Archivos,NewCommits):-
+
+addCommit(Commits,Rama,Mensaje,Archivos,NewCommits):-
     append([Rama],[Mensaje],Aux),
     append(Aux,Archivos,Commit),
     append(Commits,[Commit],NewCommits).
+
+addCommits(Commits,CommitsAux,NewCommits):-CommitsAux=[],NewCommits=Commits,!.
+addCommits(Commits,CommitsAux,NewCommits):-
+    getCabeza(CommitsAux,Cabeza),
+    append(Commits,[Cabeza],Aux),
+    getCola(CommitsAux,Cola),
+    addCommits(Aux,Cola,NewCommits).
 
 
 archivos2String(Archivos,Aux,String):-Archivos=[],string_concat(Aux,"\n",String),!.
@@ -102,10 +122,26 @@ archivos2String(Archivos,Aux,String):-getCabeza(Archivos,Cabeza),
 commits2String(Commits,Aux,String):-Commits=[],String=Aux,!.
 commits2String(Commits,Aux,String):-getCabeza(Commits,[_|Commit]),
     archivos2String(Commit,"",Aux1),
-    string_concat(Aux,Aux1,Aux2),
-    string_concat(Aux2,"\t",Aux3),
+    string_concat(Aux,"\t",Aux2),
+    string_concat(Aux2,Aux1,Aux3),
     getCola(Commits,Cola),
     commits2String(Cola,Aux3,String).
+
+getArchivosRemote(Remote,Workspace,Archivos):-Remote=[],Archivos=Workspace,!.
+getArchivosRemote(Remote,Workspace,Archivos):-
+    getCabeza(Remote,[_,_|Cabeza]),
+    append(Workspace,Cabeza,Aux),
+    getCola(Remote,Cola),
+    getArchivosRemote(Cola,Aux,Archivos).
+
+ultimosCommits2String(Remote,Cant,Aux,StringCommits):-
+    getUltimoElem(Remote,Commit),
+    commits2String([Commit],"",String),
+    string_concat(Aux,String,Aux2),
+    Cant is Cant-1,
+    getCola(Remote,Cola),
+    ultimosCommits2String(Cola,)
+
 
 %-----FIN DEL TDA-----
 
@@ -128,7 +164,7 @@ gitCommit(RepInput,Mensaje,RepOutput):-
     getIndex(RepInput,Index),
     not(Index=[]),
     getLocal(RepInput,Local),
-    addCommits(Local,"master",Mensaje,Index,NewLocal),
+    addCommit(Local,"master",Mensaje,Index,NewLocal),
     setLocal(NewLocal,RepInput,Aux),
     setIndex([],Aux,RepOutput).
 
@@ -162,12 +198,44 @@ git2String(RepInput,RepAsString):-
     string_concat(Aux10,Index2String,Aux11),
     string_concat(Aux11, "COMMITS EN EL LOCAL\n",Aux12),
     getLocal(RepInput,Local),
-    commits2String(Local,"\t",Local2String),
+    commits2String(Local,"",Local2String),
     string_concat(Aux12,Local2String,Aux13),
     string_concat(Aux13, "COMMITS EN EL REMOTE\n",Aux14),
     getRemote(RepInput,Remote),
-    commits2String(Remote,"\t",Remote2String),
+    commits2String(Remote,"",Remote2String),
     string_concat(Aux14,Remote2String,RepAsString).
+
+gitPull(RepInput,RepOutput):-
+    isRep(RepInput),
+    getLocal(RepInput,Local),
+    getRemote(RepInput,Remote),
+    addCommits(Local,Remote,NewLocal),
+    setLocal(NewLocal,RepInput,Aux),
+    getWorkspace(RepInput,Workspace),
+    getArchivosRemote(Remote,Workspace,Archivos),
+    setWorkspace(Archivos,Aux,RepOutput).
+
+gitStatus(RepInput,RepStatusStr):-
+    getIndex(RepInput,Index),
+    archivos2String(Index,"\t",Index2String),
+    string_concat("ARCHIVOS AGREGADOS AL INDEX:\n",Index2String,Aux),
+    string_concat(Aux,"CANTIDAD DE COMMITS EN EL LOCAL REPOSITORY:\n",Aux2),
+    getLocal(RepInput,Local),
+    length(Local,CantCommits),
+    string_concat(Aux2,CantCommits,Aux3),
+    string_concat(Aux3,"\nRAMA ACTUAL:\n",Aux4),
+    getRama(RepInput,Rama),
+    string_concat(Aux4,Rama,RepStatusStr).
+
+gitLog(_,RepLogStr):-RepLogStr="REALICE COMO MINIMO 5 COMMITS Y VUELVA A INTENTARLO",!.
+gitLog(RepInput,RepLogStr):-
+    isRep(RepInput),
+    getRemote(RepInput,Remote),
+    length(Remote, CantCommits),
+    CantCommits>4,
+    invertirLista(Remote,[],NewRemote)
+    ultimosCommits2String(NewRemote,5,StringCommits),
+    string_concat("LOS ULTIMOS 5 COMMITS SON:\n",StringCommits,RepLogStr).
 
 
 
