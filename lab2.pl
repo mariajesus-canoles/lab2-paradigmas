@@ -134,13 +134,12 @@ getArchivosRemote(Remote,Workspace,Archivos):-
     getCola(Remote,Cola),
     getArchivosRemote(Cola,Aux,Archivos).
 
-ultimosCommits2String(Remote,Cant,Aux,StringCommits):-
-    getUltimoElem(Remote,Commit),
+ultimosCommits2String(_,0,Aux,StringCommits):-StringCommits=Aux,!.
+ultimosCommits2String([Commit|Cola],Cant,Aux,StringCommits):-
     commits2String([Commit],"",String),
     string_concat(Aux,String,Aux2),
-    Cant is Cant-1,
-    getCola(Remote,Cola),
-    ultimosCommits2String(Cola,)
+    CantAux is Cant-1,
+    ultimosCommits2String(Cola,CantAux,Aux2,StringCommits).
 
 
 %-----FIN DEL TDA-----
@@ -227,18 +226,27 @@ gitStatus(RepInput,RepStatusStr):-
     getRama(RepInput,Rama),
     string_concat(Aux4,Rama,RepStatusStr).
 
-gitLog(_,RepLogStr):-RepLogStr="REALICE COMO MINIMO 5 COMMITS Y VUELVA A INTENTARLO",!.
 gitLog(RepInput,RepLogStr):-
     isRep(RepInput),
     getRemote(RepInput,Remote),
     length(Remote, CantCommits),
     CantCommits>4,
-    invertirLista(Remote,[],NewRemote)
-    ultimosCommits2String(NewRemote,5,StringCommits),
+    invertirLista(Remote,[],NewRemote),!,
+    ultimosCommits2String(NewRemote,5,"",StringCommits),
     string_concat("LOS ULTIMOS 5 COMMITS SON:\n",StringCommits,RepLogStr).
+gitLog(_,RepLogStr):-RepLogStr="REALICE COMO MINIMO 5 COMMITS Y VUELVA A INTENTARLO",!.
 
-
-
+gitBranch(RepInput,NewRama,RepOutput):-
+    isRep(RepInput), string(NewRama),
+    getRemote(RepInput,Remote),
+    invertirLista(Remote,[],Aux),
+    getCabeza(Aux,Commit),
+    getCola(Commit,ColaCommit),
+    getCola(Aux,ColaCommits),
+    append([NewRama],ColaCommit,NewCommit),
+    append([NewCommit],ColaCommits,Aux2),
+    invertirLista(Aux2,[],NewRemote),
+    setRemote(NewRemote,RepInput,RepOutput).
 
 
 
