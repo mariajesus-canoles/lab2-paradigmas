@@ -2,10 +2,7 @@
 %programacion Prolog, el cual se rige por el paradigma logico
 %Autora: Maria Jesus Cañoles Roa
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-repositorio([["lab2", "Roa", "Wed Jul 30 03:53:17 2020"], [], [], [], []]).
-repositorio([["lab1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","mensaje2","arch32","arch15","archXX"],["master","mensaje1","arch3","arch5"]], [["master","mensaje2","arch4"]]]).
-%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Dominio:   Fecha=Atomo
 %Predicado: getFecha(Fecha)
@@ -379,13 +376,21 @@ gitStatus(RepInput,RepStatusStr):-
 %objetivo:  Crea un string con los ultimos 5 commits agregados
 gitLog(RepInput,RepLogStr):-
     isRep(RepInput),
-    getRemote(RepInput,Remote),
-    length(Remote, CantCommits),
-    CantCommits>4,
-    invertirLista(Remote,[],NewRemote),!,
-    ultimosCommits2String(NewRemote,5,"",StringCommits),
+    getLocal(RepInput,Local),
+    length(Local, CantCommits),
+    CantCommits>4,!,
+    invertirLista(Local,[],NewLocal),
+    ultimosCommits2String(NewLocal,5,"",StringCommits),
     string_concat("LOS ULTIMOS 5 COMMITS SON:\n",StringCommits,RepLogStr).
-gitLog(_,RepLogStr):-RepLogStr="REALICE COMO MINIMO 5 COMMITS Y VUELVA A INTENTARLO",!.
+gitLog(RepInput,RepLogStr):-
+    isRep(RepInput),
+    getLocal(RepInput,Local),
+    length(Local, CantCommits),
+    invertirLista(Local,[],NewLocal),
+    ultimosCommits2String(NewLocal,CantCommits,"",StringCommits),
+    string_concat("LOS ULTIMOS ",CantCommits,Aux),
+    string_concat(Aux," COMMITS SON:\n",Aux2),
+    string_concat(Aux2,StringCommits,RepLogStr).
 
 %Dominio:   Repositorio=Lista, Rama=Atomo
 %Predicado: gitBranch(Repositorio,Rama,Repositorio)
@@ -402,3 +407,45 @@ gitBranch(RepInput,NewRama,RepOutput):-
     append([NewCommit],ColaCommits,Aux2),
     invertirLista(Aux2,[],NewRemote),
     setRemote(NewRemote,RepInput,RepOutput).
+
+%EJEMPLOS DE USO
+
+%repositorio("Lab2","Jesus","Mon Aug 3 05:06:16 2020",["arch3.pl","arch2.pl"],["arch2.pl"],[["master","Segundo commit","arch1,pl"]],[["master","Primer commit","arch0,pl"]],RepOutput).
+%repositorio("Lab3","Jesus","Mon Aug 3 05:06:16 2020",["arch3.pl","arch2.pl"],["arch2.pl"],[["master","Segundo commit","arch1,pl"]],[],RepOutput).
+%repositorio("Lab3","Jesus","Mon Aug 3 05:06:16 2020",["arch3.pl","arch2.pl"],["arch2.pl"],[],[["master","Primer commit","arch0,pl"],["master","Segundo commit","arch1,pl"]],RepOutput).
+
+%gitInit("Lab 1","Jesus",RepOutput).
+%gitInit("Lab 2","Simon",RepOutput).
+%gitInit("Lab 3","Roberto",RepOutput).
+
+%gitAdd([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],["arch1","arch0"],RepOutput).
+%gitAdd([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],[],RepOutput).
+%gitAdd([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],["arch0"],RepOutput).
+
+%gitCommit([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],"Cuarto commit",RepOutput).
+%gitCommit([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],"Cuarto commit",RepOutput).
+%gitCommit([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],"Cuarto commit",RepOutput).
+
+%gitPush([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],RepOutput).
+%gitPush([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"]], [["master","Primer commit","arch0"]]],RepOutput).
+%gitPush([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"]], [["master","Primer commit","arch0"]]],RepOutput).
+
+%git2String([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch2"]], [["master","Primer commit","arch0"]]],RepAsString),write(RepAsString).
+%git2String([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3","arch4"], [["master","Segundo commit","arch1"]], [["master","Primer commit","arch0"]]],RepAsString),write(RepAsString).
+%git2String([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"]], [["master","Primer commit","arch0"]]],RepAsString),write(RepAsString).
+
+%gitPull([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch3","arch4"], ["arch2"], [], [["master","Primer commit","arch0"],["master","Segundo commit","arch1"]]],RepOutput).
+%gitPull([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch3","arch4"], ["arch2"], [], [["master","Primer commit","arch0"]]],RepOutput).
+%gitPull([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch3","arch4"], ["arch2"], [], [["master","Primer commit","arch0","arch1"]]],RepOutput).
+
+%gitStatus([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11"],["master","Cuarto commit","archX"],["master","Segundo commit","arch1"],["master","Quinto commit","archL"],["master","Sexto commit","archW"]], [["master","Segundo commit","arch1"]]],RepStatusStr),write(RepStatusStr).
+%gitStatus([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2","arch3"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11"],["master","Cuarto commit","archX"]], [["master","Segundo commit","arch1"]]],RepStatusStr),write(RepStatusStr).
+%gitStatus([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11"]], [["master","Segundo commit","arch1"]]],RepStatusStr),write(RepStatusStr).
+
+%gitLog([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11"],["master","Cuarto commit","archX"],["master","Segundo commit","arch1"],["master","Quinto commit","archL"],["master","Sexto commit","archW"]], [["master","Segundo commit","arch1"]]],RepLogStr),write(RepLogStr).
+%gitLog([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11","arch12"],["master","Cuarto commit","archX"],["master","Segundo commit","arch1","arch42"],["master","Quinto commit","archL"],["master","Sexto commit","archW"]], [["master","Segundo commit","arch1"]]],RepLogStr),write(RepLogStr).
+%gitLog([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch1"],["master","Tercer commit","arch11","arch12"]], [["master","Segundo commit","arch1"]]],RepLogStr),write(RepLogStr).
+
+%gitBranch([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Segundo commit","arch2"],["master","Tercer commit","arch11","arch12"]], [["master","Primer commit","arch1"]]],"Develop",RepOutput).
+%gitBranch([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Tercer commit","arch11","arch12"]], [["master","Primer commit","arch1"],["master","Segundo commit","arch2"]]],"DevelopX",RepOutput).
+%gitBranch([["Lab 1", "Cañoles", "Wed Jul 29 03:53:17 2020"], ["arch1","arch0"], ["arch2"], [["master","Tercer commit","arch11","arch12"]], [["master","Primer commit","arch1"],["master","Segundo commit","arch2","arch21"]]],"DevelopX",RepOutput).
